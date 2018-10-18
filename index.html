@@ -112,7 +112,7 @@
                         <table>
                             <tr>
                                 <td style="width: 50%; vertical-align: middle;">
-                                    <p>Real time 360° interaction with real world objects and/or images pre defined by the customer</p>
+                                    <p>Real time 360° interaction with real world objects and/or images pre defined by the developer</p>
                                     <p>
                                         <em>Example: </em><br />
                                         IKEA <a href="https://highlights.ikea.com/2017/ikea-place/" target="_blank">(+info)</a>
@@ -202,10 +202,9 @@
                     <section>
                         <h2>Image recognition</h2>
                         <pre><code class="hljs" data-trim contenteditable>
-this.targetCollectionResource = new AR.TargetCollectionResource("assets/magazine.wtc", {
-});
+this.targetCollectionResource = new AR.TargetCollectionResource("assets/magazine.wtc", {});
 this.tracker = new AR.ImageTracker(this.targetCollectionResource, {
-onTargetsLoaded: this.worldLoaded
+	onTargetsLoaded: this.worldLoaded
 });
 
 // Create overlay for page one
@@ -222,6 +221,9 @@ cam: overlayOne
 }
 });
                         </code></pre>
+						<p>
+							<a href="https://github.com/Wikitude/wikitude-cordova-plugin-samples/blob/master/SampleAppResources/world/01_ImageTracking_1_ImageOnTarget/js/imageontarget.js" target="_blank">(View source)</a>
+						</p>
                     </section>
 
                     <section>
@@ -233,8 +235,8 @@ cam: overlayOne
                         <h2>Geolocation</h2>
                         <pre><code class="hljs" data-trim contenteditable>
 var poiData = {
-    "longitude": (lon + (Math.random() / 5 - 0.1)),
-    "latitude": (lat + (Math.random() / 5 - 0.1)),
+    "longitude": ([current Longitude] + (Math.random() / 5 - 0.1)),
+    "latitude": ([current Latitude] + (Math.random() / 5 - 0.1)),
     "altitude": 100.0
 };
 
@@ -255,6 +257,9 @@ new AR.GeoObject(markerLocation, {
     }
 });
                         </code></pre>
+						<p>
+							<a href="https://github.com/Wikitude/wikitude-cordova-plugin-samples/blob/master/SampleAppResources/world/08_PointOfInterest_1_PoiAtLocation/js/poiatlocation.js" target="_blank">(View source)</a>
+						</p>
                     </section>
 
                 </section>
@@ -298,4 +303,3 @@ new AR.GeoObject(markerLocation, {
 
 	</body>
 </html>
-
