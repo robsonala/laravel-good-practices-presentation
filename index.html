@@ -92,11 +92,29 @@ class CheckAge
                     <br />
                     <div class="fragment">
                         <strong>Paddle</strong><br />
-                        Receive a value on header and use it to encrypt/decrypt data.
+                        Receive a header and use it to encrypt/decrypt data.
                     </div>
                     <div class="fragment">
                         <pre><code class="hljs" data-trim contenteditable>
-COPY CODE
+class ApiCheckHeader
+{
+    /**
+        * Handle an incoming request.
+        *
+        * @param \Illuminate\Http\Request $request
+        * @param \Closure $next
+        * @return mixed
+        */
+    public function handle($request, Closure $next)
+    {
+        $pass = $request->header('X-Passphrase');
+        if ($pass) {
+            CryptoUser::setSessionPassphrase((new Encrypter(substr($request->header('Authorization'), -16)))->decrypt(Crypt::decryptString($pass)));
+        }
+
+        return $next($request);
+    }
+}
                         </code></pre>
                     </div>
                 </section>
@@ -121,6 +139,11 @@ class AfterMiddleware
 
         return $response;
     }
+
+    public function terminate($request, $response)
+    {
+        // Called after the response is sent
+    }
 }
                             </code></pre>
                     </div>
@@ -135,7 +158,36 @@ class AfterMiddleware
                     </div>
                     <div class="fragment">
                         <pre><code class="hljs" data-trim contenteditable>
-COPY CODE
+                            class ApiCheckHeader
+                            {
+                            
+                                /**
+                                 * Handle an incoming request.
+                                 *
+                                 * @param \Illuminate\Http\Request $request
+                                 * @param \Closure $next
+                                 * @return mixed
+                                 */
+                                public function handle($request, Closure $next)
+                                {
+                                    return $next($request);
+                                }
+                            
+                                public function terminate($request, $response)
+                                {
+                                    try {
+                                        if ($response->original['#status'] != 'success') {
+                                            $data = [
+                                                'path' => $request->path(),
+                                                'method' => $request->method(),
+                                                'params' => $request->except(['password', 'old_password'])
+                                            ];
+                                            Auditlog::warning(AuditLog::CATEGORY_API, $response->original['#message'], null, json_encode($data));
+                                        }
+                                    } catch (\Exception $e) {
+                                    }
+                                }
+                            }
                         </code></pre>
                     </div>
                 </section>
@@ -145,8 +197,8 @@ COPY CODE
                     <br />
                     <div class="fragment">
                         All middlewares must be registered on <u>app/Http/Kernel.php</u><br />
-                        <a href="https://raw.githubusercontent.com/laravel/laravel/5.5/app/Http/Kernel.php"
-                            target="_blank">See code</a>
+                        <a href="https://raw.githubusercontent.com/laravel/laravel/5.5/app/Http/Kernel.php" target="_blank">See
+                            code</a>
                     </div>
                 </section>
 
@@ -157,8 +209,8 @@ COPY CODE
                     <h2>Eloquent: Collection</h2>
                     <p>&nbsp;</p>
                     <div class="fragment">
-                        All database query made using Eloquent(Model) is an instance of Collection<br />
-                        Collections on Laravel has loads of useful helpers that should be used always necessary.
+                        All database query performed using Eloquent(Model) are instance of Collection<br />
+                        There are loads of useful helpers on Collections that should be used when necessary.
                     </div>
                 </section>
 
@@ -167,36 +219,36 @@ COPY CODE
                     <h3>chunk</h3>
                     <p>&nbsp;</p>
                     <pre><code class="hljs" data-trim contenteditable>
-    $items = Colors::all();
-    /*
+$items = Colors::all();
+/*
+[
+    ['name' => 'White', 'hex' => 'ffffff'],
+    ['name' => 'Black', 'hex' => '000000'],
+    ['name' => 'Gray', 'hex' => '999999'],
+    ['name' => 'Red', 'hex' => 'ff0000'],
+    ['name' => 'Blue', 'hex' => '0000ff'],
+    ['name' => 'Yellow', 'hex' => 'ffff00'],
+]
+*/
+
+$items->chunk(2);
+
+/*
+[
     [
         ['name' => 'White', 'hex' => 'ffffff'],
         ['name' => 'Black', 'hex' => '000000'],
+    ],
+    [
         ['name' => 'Gray', 'hex' => '999999'],
         ['name' => 'Red', 'hex' => 'ff0000'],
+    ],
+    [
         ['name' => 'Blue', 'hex' => '0000ff'],
         ['name' => 'Yellow', 'hex' => 'ffff00'],
     ]
-    */
-    
-    $items->chunk(2);
-    
-    /*
-    [
-        [
-            ['name' => 'White', 'hex' => 'ffffff'],
-            ['name' => 'Black', 'hex' => '000000'],
-        ],
-        [
-            ['name' => 'Gray', 'hex' => '999999'],
-            ['name' => 'Red', 'hex' => 'ff0000'],
-        ],
-        [
-            ['name' => 'Blue', 'hex' => '0000ff'],
-            ['name' => 'Yellow', 'hex' => 'ffff00'],
-        ]
-    ]
-    */
+]
+*/
                         </code></pre>
                 </section>
 
@@ -293,7 +345,32 @@ $items->toArray()
                     <h3>Real Life Example</h3>
                     <p>&nbsp;</p>
                     <pre><code class="hljs" data-trim contenteditable>
-COPY CODE
+User::search($request->input('start'), $request->input('length'), $request->input('order'), $q)
+    ->map(function ($item) {
+        $item->email_verification = $item->email_verification ? date('Y-m-d H:i:s', $item->email_verification) : null;
+        $item->status = User::$STATUS_LABELS[$item->status];
+        return $item;
+    });
+
+///
+
+public static function deleteByUser($user_id, $parent_type = null, $parent_id = null)
+{
+    $items = self::where('user_id', $user_id);
+
+    if ($parent_type) {
+        $items->where('parent_type', $parent_type);
+    }
+    if ($parent_id) {
+        $items->where('parent_id', $parent_id);
+    }
+
+    $ids = $items->pluck('content_id')->toArray();
+    $items->delete();
+
+    return $ids;
+    // [123, 34, 565, 678]
+}
                 </code></pre>
                 </section>
             </section>
@@ -305,26 +382,37 @@ COPY CODE
 
                     <div style="text-align:left;">
                         <div class="fragment">
-                            &bull; Google/Stackoverflow is our friend, but always check the Official documentation.
-                        </div>
-                        <div class="fragment">
-                            &bull; If you need a specific feature check if already exists (<a
-                                href="https://packagist.org/">https://packagist.org/</a>) before create it.
-                        </div>
-                        <div class="fragment">
                             &bull; Use ENUM or CONST in a class when you are using a fixed value.
                             <h5>Example:</h5>
                             <pre><code class="hljs" data-trim contenteditable>
-class Test {
-    const MAX_ATTEMPT = 5;
+class User extends Authenticatable
+{
+    ...
+    const USER_APP_PIN_SIZE = 5;
+    ...
 }
-...
-file1.php
-if ($qty > Test::MAX_ATTEMPT)
-...
-file2.php
-while ($count < Test::MAX_ATTEMPT)
+
+class UserValidator extends AbstractValidator
+{
+    ...   
+    protected $updatePinRules = [
+        'old_password' => ['required','max:255'],
+        'password' => ['required','size:' . User::USER_APP_PIN_SIZE,'confirmed']
+    ];
+    ...
+}
+
+class UserController extends Controller
+{
+    ...
+    $token = mt_rand(pow(10, User::USER_APP_PIN_SIZE - 1), (pow(10, User::USER_APP_PIN_SIZE) - 1));
+    ...
+}
                             </code></pre>
+                        </div>
+                        <div class="fragment">
+                            &bull; If you need a specific feature check if already exists (<a href="https://packagist.org/">https://packagist.org/</a>)
+                            before create it.
                         </div>
                     </div>
                 </section>
