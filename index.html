@@ -63,7 +63,6 @@
                     </div>
                     <br />
                     <div class="fragment">
-                        <h5>Example</h5>
                         <pre><code class="hljs" data-trim contenteditable>
 class CheckAge
 {
@@ -127,7 +126,6 @@ class ApiCheckHeader
                     </div>
                     <br />
                     <div class="fragment">
-                        <h5>Example</h5>
                         <pre><code class="hljs" data-trim contenteditable>
 class AfterMiddleware
 {
@@ -160,14 +158,6 @@ class AfterMiddleware
                         <pre><code class="hljs" data-trim contenteditable>
                             class ApiCheckHeader
                             {
-                            
-                                /**
-                                 * Handle an incoming request.
-                                 *
-                                 * @param \Illuminate\Http\Request $request
-                                 * @param \Closure $next
-                                 * @return mixed
-                                 */
                                 public function handle($request, Closure $next)
                                 {
                                     return $next($request);
@@ -175,16 +165,13 @@ class AfterMiddleware
                             
                                 public function terminate($request, $response)
                                 {
-                                    try {
-                                        if ($response->original['#status'] != 'success') {
-                                            $data = [
-                                                'path' => $request->path(),
-                                                'method' => $request->method(),
-                                                'params' => $request->except(['password', 'old_password'])
-                                            ];
-                                            Auditlog::warning(AuditLog::CATEGORY_API, $response->original['#message'], null, json_encode($data));
-                                        }
-                                    } catch (\Exception $e) {
+                                    if ($response->original['#status'] != 'success') {
+                                        $data = [
+                                            'path' => $request->path(),
+                                            'method' => $request->method(),
+                                            'params' => $request->except(['password', 'old_password'])
+                                        ];
+                                        Auditlog::warning(AuditLog::CATEGORY_API, $response->original['#message'], null, json_encode($data));
                                     }
                                 }
                             }
